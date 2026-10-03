@@ -19,3 +19,28 @@ GET {{host}}/workouts/1
 
 ### Delete a workout
 DELETE {{host}}/workouts/1
+
+### Invalid: empty exercise and negative reps (expect 400)
+POST {{host}}/workouts
+Content-Type: application/json
+
+{
+  "exercise": "",
+  "sets": 3,
+  "reps": -5,
+  "weightKg": 60
+}
+
+### Invalid: several problems at once (expect 400)
+POST {{host}}/workouts
+Content-Type: application/json
+
+{
+  "exercise": "Squat",
+  "sets": 0,
+  "reps": 5,
+  "weightKg": -20,
+  "date": "2099-01-01"
+}
+### Delete the invalid test record
+DELETE {{host}}/workouts/3
