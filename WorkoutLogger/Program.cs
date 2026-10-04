@@ -5,7 +5,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<WorkoutDb>(options =>
     options.UseSqlite("Data Source=workouts.db"));
 
+builder.Services.AddDbContext<WorkoutDb>(options =>
+    options.UseSqlite("Data Source=workouts.db"));
+
+// Swagger services
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
+
+// Swagger UI is available only while developing
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 using (var scope = app.Services.CreateScope())
 {
