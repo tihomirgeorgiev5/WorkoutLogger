@@ -5,39 +5,66 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<WorkoutDb>(options =>
     options.UseSqlite("Data Source=workouts.db"));
 
-builder.Services.AddDbContext<WorkoutDb>(options =>
-    options.UseSqlite("Data Source=workouts.db"));
-
-// Swagger services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Swagger UI is available only while developing
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Apply pending migrations (creates the database on the first run)
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<WorkoutDb>().Database.EnsureCreated();
+    scope.ServiceProvider.GetRequiredService<WorkoutDb>().Database.Migrate();
 }
 
 var group = app.MapGroup("/workouts");
 
-group.MapGet("/", async (WorkoutDb db) => await db.Workouts.ToListAsync());
+// List all workouts with their sets, newest first
+group.MapGet("/", async (WorkoutDb db) =>
+{
+    var workouts = await db.Workouts
+        .Include(w => w.Sets)
+        .OrderByDescending(w => w.Date)
+        .ThenByDescending(w => w.Id)
+        .ToListAsync();
 
+    return workouts.Select(ToDto);
+});
+
+// Personal records: heaviest set per exercise
+group.MapGet("/records", async (WorkoutDb db) =>
+{
+    var sets = await db.ExerciseSets.Include(s => s.Workout).ToListAsync();
+
+    return sets
+        .GroupBy(s => s.Exercise.Trim().ToLowerInvariant())
+        .Select(g =>
+        {
+            var best = g.OrderByDescending(s => s.WeightKg)
+                        .ThenByDescending(s => s.Reps)
+                        .First();
+
+            return new ExerciseRecord(
+                best.Exercise, best.WeightKg, best.Reps, best.Workout!.Date, g.Count());
+        })
+        .OrderBy(r => r.Exercise)
+        .ToList();
+});
+
+// Get one workout with its sets
 group.MapGet("/{id}", async (int id, WorkoutDb db) =>
-    await db.Workouts.FindAsync(id) is { } workout
-        ? Results.Ok(workout)
+    await db.Workouts.Include(w => w.Sets).FirstOrDefaultAsync(w => w.Id == id) is { } workout
+        ? Results.Ok(ToDto(workout))
         : Results.NotFound());
 
+// Create a workout together with its sets
 group.MapPost("/", async (NewWorkout input, WorkoutDb db) =>
 {
-    // Reject invalid input with a 400 response listing every problem
     var errors = Validate(input);
     if (errors.Count > 0)
         return Results.ValidationProblem(errors);
@@ -45,17 +72,21 @@ group.MapPost("/", async (NewWorkout input, WorkoutDb db) =>
     var workout = new Workout
     {
         Date = input.Date ?? DateOnly.FromDateTime(DateTime.Today),
-        Exercise = input.Exercise!.Trim(),
-        Sets = input.Sets,
-        Reps = input.Reps,
-        WeightKg = input.WeightKg
+        Notes = input.Notes?.Trim(),
+        Sets = input.Sets!.Select(s => new ExerciseSet
+        {
+            Exercise = s.Exercise!.Trim(),
+            Reps = s.Reps,
+            WeightKg = s.WeightKg
+        }).ToList()
     };
 
     db.Workouts.Add(workout);
     await db.SaveChangesAsync();
-    return Results.Created($"/workouts/{workout.Id}", workout);
+    return Results.Created($"/workouts/{workout.Id}", ToDto(workout));
 });
 
+// Delete a workout (its sets are deleted automatically by cascade)
 group.MapDelete("/{id}", async (int id, WorkoutDb db) =>
 {
     var workout = await db.Workouts.FindAsync(id);
@@ -68,45 +99,87 @@ group.MapDelete("/{id}", async (int id, WorkoutDb db) =>
 
 app.Run();
 
+// Maps a database entity to the object we return as JSON
+static WorkoutDto ToDto(Workout w) =>
+    new(w.Id, w.Date, w.Notes,
+        w.Sets.OrderBy(s => s.Id)
+              .Select(s => new SetDto(s.Id, s.Exercise, s.Reps, s.WeightKg))
+              .ToList());
+
 // Collects validation errors as field name -> list of messages
 static Dictionary<string, string[]> Validate(NewWorkout input)
 {
     var errors = new Dictionary<string, string[]>();
 
-    if (string.IsNullOrWhiteSpace(input.Exercise))
-        errors["exercise"] = ["Exercise is required."];
-    else if (input.Exercise.Trim().Length > 100)
-        errors["exercise"] = ["Exercise must be 100 characters or fewer."];
-
-    if (input.Sets < 1 || input.Sets > 100)
-        errors["sets"] = ["Sets must be between 1 and 100."];
-
-    if (input.Reps < 1 || input.Reps > 1000)
-        errors["reps"] = ["Reps must be between 1 and 1000."];
-
-    if (input.WeightKg < 0 || input.WeightKg > 1000)
-        errors["weightKg"] = ["Weight must be between 0 and 1000 kg."];
-
     if (input.Date is { } date && date > DateOnly.FromDateTime(DateTime.Today))
         errors["date"] = ["Date cannot be in the future."];
+
+    if (input.Notes is { Length: > 500 })
+        errors["notes"] = ["Notes must be 500 characters or fewer."];
+
+    if (input.Sets is null || input.Sets.Count == 0)
+    {
+        errors["sets"] = ["At least one set is required."];
+        return errors;
+    }
+
+    if (input.Sets.Count > 50)
+        errors["sets"] = ["A workout can have at most 50 sets."];
+
+    for (var i = 0; i < input.Sets.Count; i++)
+    {
+        var item = input.Sets[i];
+
+        if (item is null)
+        {
+            errors[$"sets[{i}]"] = ["Set cannot be empty."];
+            continue;
+        }
+
+        if (string.IsNullOrWhiteSpace(item.Exercise))
+            errors[$"sets[{i}].exercise"] = ["Exercise is required."];
+        else if (item.Exercise.Trim().Length > 100)
+            errors[$"sets[{i}].exercise"] = ["Exercise must be 100 characters or fewer."];
+
+        if (item.Reps < 1 || item.Reps > 1000)
+            errors[$"sets[{i}].reps"] = ["Reps must be between 1 and 1000."];
+
+        if (item.WeightKg < 0 || item.WeightKg > 1000)
+            errors[$"sets[{i}].weightKg"] = ["Weight must be between 0 and 1000 kg."];
+    }
 
     return errors;
 }
 
+// Database entities
 class Workout
 {
     public int Id { get; set; }
     public DateOnly Date { get; set; }
+    public string? Notes { get; set; }
+    public List<ExerciseSet> Sets { get; set; } = new();
+}
+
+class ExerciseSet
+{
+    public int Id { get; set; }
+    public int WorkoutId { get; set; }
+    public Workout? Workout { get; set; }
     public string Exercise { get; set; } = "";
-    public int Sets { get; set; }
     public int Reps { get; set; }
     public double WeightKg { get; set; }
 }
 
-record NewWorkout(string? Exercise, int Sets, int Reps, double WeightKg, DateOnly? Date);
+// Request and response shapes
+record NewSet(string? Exercise, int Reps, double WeightKg);
+record NewWorkout(DateOnly? Date, string? Notes, List<NewSet>? Sets);
+record SetDto(int Id, string Exercise, int Reps, double WeightKg);
+record WorkoutDto(int Id, DateOnly Date, string? Notes, List<SetDto> Sets);
+record ExerciseRecord(string Exercise, double MaxWeightKg, int RepsAtMax, DateOnly Date, int TotalSets);
 
 class WorkoutDb : DbContext
 {
     public WorkoutDb(DbContextOptions<WorkoutDb> options) : base(options) { }
     public DbSet<Workout> Workouts => Set<Workout>();
+    public DbSet<ExerciseSet> ExerciseSets => Set<ExerciseSet>();
 }

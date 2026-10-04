@@ -3,15 +3,39 @@
 ### Get all workouts
 GET {{host}}/workouts
 
-### Create a new workout
+### Personal records
+GET {{host}}/workouts/records
+
+### Create a workout with sets
 POST {{host}}/workouts
 Content-Type: application/json
 
 {
-  "exercise": "Bench press",
-  "sets": 3,
-  "reps": 10,
-  "weightKg": 60
+  "notes": "Chest and legs day",
+  "sets": [
+    { "exercise": "Bench press", "reps": 10, "weightKg": 60 },
+    { "exercise": "Bench press", "reps": 8, "weightKg": 70 },
+    { "exercise": "Squat", "reps": 8, "weightKg": 80 }
+  ]
+}
+
+### Invalid: empty exercise and negative reps (expect 400)
+POST {{host}}/workouts
+Content-Type: application/json
+
+{
+  "sets": [
+    { "exercise": "", "reps": -5, "weightKg": 60 }
+  ]
+}
+
+### Invalid: no sets and a future date (expect 400)
+POST {{host}}/workouts
+Content-Type: application/json
+
+{
+  "date": "2099-01-01",
+  "sets": []
 }
 
 ### Get a single workout
@@ -19,28 +43,3 @@ GET {{host}}/workouts/1
 
 ### Delete a workout
 DELETE {{host}}/workouts/1
-
-### Invalid: empty exercise and negative reps (expect 400)
-POST {{host}}/workouts
-Content-Type: application/json
-
-{
-  "exercise": "",
-  "sets": 3,
-  "reps": -5,
-  "weightKg": 60
-}
-
-### Invalid: several problems at once (expect 400)
-POST {{host}}/workouts
-Content-Type: application/json
-
-{
-  "exercise": "Squat",
-  "sets": 0,
-  "reps": 5,
-  "weightKg": -20,
-  "date": "2099-01-01"
-}
-### Delete the invalid test record
-DELETE {{host}}/workouts/3
