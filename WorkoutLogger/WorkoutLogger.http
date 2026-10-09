@@ -36,7 +36,7 @@ Content-Type: application/json
 {
   "date": "2099-01-01",
   "sets": []
-}
+}+
 
 ### Get a single workout
 GET {{host}}/workouts/1

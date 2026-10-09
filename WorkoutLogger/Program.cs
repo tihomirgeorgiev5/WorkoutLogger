@@ -24,17 +24,22 @@ using (var scope = app.Services.CreateScope())
 
 var group = app.MapGroup("/workouts");
 
-// List all workouts with their sets, newest first
-group.MapGet("/", async (WorkoutDb db) =>
+// List workouts, optionally filtered by ?from=2026-10-01&to=2026-10-31
+group.MapGet("/", async (DateOnly? from, DateOnly? to, WorkoutDb db) =>
 {
-    var workouts = await db.Workouts
-        .Include(w => w.Sets)
+    var query = db.Workouts.Include(w => w.Sets).AsQueryable();
+
+    if (from is { } f) query = query.Where(w => w.Date >= f);
+    if (to is { } t) query = query.Where(w => w.Date <= t);
+
+    var workouts = await query
         .OrderByDescending(w => w.Date)
         .ThenByDescending(w => w.Id)
         .ToListAsync();
 
     return workouts.Select(ToDto);
 });
+
 
 // Personal records: heaviest set per exercise
 group.MapGet("/records", async (WorkoutDb db) =>
@@ -53,6 +58,18 @@ group.MapGet("/records", async (WorkoutDb db) =>
                 best.Exercise, best.WeightKg, best.Reps, best.Workout!.Date, g.Count());
         })
         .OrderBy(r => r.Exercise)
+        .ToList();
+});
+
+// Weekly volume: sum of reps x weight per week (weeks start on Monday)
+group.MapGet("/volume/weekly", async (WorkoutDb db) =>
+{
+    var sets = await db.ExerciseSets.Include(s => s.Workout).ToListAsync();
+
+    return sets
+        .GroupBy(s => StartOfWeek(s.Workout!.Date))
+        .OrderByDescending(g => g.Key)
+        .Select(g => new WeeklyVolume(g.Key, g.Count(), g.Sum(s => s.Reps * s.WeightKg)))
         .ToList();
 });
 
@@ -150,6 +167,15 @@ static Dictionary<string, string[]> Validate(NewWorkout input)
 
     return errors;
 }
+
+// Returns the Monday of the week that contains the given date
+static DateOnly StartOfWeek(DateOnly d)
+{
+    var diff = ((int)d.DayOfWeek + 6) % 7;
+    return d.AddDays(-diff);
+}
+
+record WeeklyVolume(DateOnly WeekStart, int TotalSets, double TotalVolumeKg);
 
 // Database entities
 class Workout
