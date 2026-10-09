@@ -43,3 +43,14 @@ GET {{host}}/workouts/1
 
 ### Delete a workout
 DELETE {{host}}/workouts/1
+
+### Replace a workout
+PUT {{host}}/workouts/2
+Content-Type: application/json
+
+{
+  "notes": "Updated: only squats",
+  "sets": [
+    { "exercise": "Squat", "reps": 5, "weightKg": 100 }
+  ]
+}

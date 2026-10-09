@@ -103,6 +103,38 @@ group.MapPost("/", async (NewWorkout input, WorkoutDb db) =>
     return Results.Created($"/workouts/{workout.Id}", ToDto(workout));
 });
 
+// Replace a workout (date, notes and all sets)
+group.MapPut("/{id}", async (int id, NewWorkout input, WorkoutDb db) =>
+{
+    var workout = await db.Workouts.Include(w => w.Sets).FirstOrDefaultAsync(w => w.Id == id);
+    if (workout is null) return Results.NotFound();
+
+    var errors = Validate(input);
+    if (errors.Count > 0)
+        return Results.ValidationProblem(errors);
+
+    // Keep the current date if none was sent
+    workout.Date = input.Date ?? workout.Date;
+    workout.Notes = input.Notes?.Trim();
+
+    // Remove the old sets and add the new ones
+    db.ExerciseSets.RemoveRange(workout.Sets);
+    workout.Sets.Clear();
+
+    foreach (var s in input.Sets!)
+    {
+        workout.Sets.Add(new ExerciseSet
+        {
+            Exercise = s.Exercise!.Trim(),
+            Reps = s.Reps,
+            WeightKg = s.WeightKg
+        });
+    }
+
+    await db.SaveChangesAsync();
+    return Results.Ok(ToDto(workout));
+});
+
 // Delete a workout (its sets are deleted automatically by cascade)
 group.MapDelete("/{id}", async (int id, WorkoutDb db) =>
 {
