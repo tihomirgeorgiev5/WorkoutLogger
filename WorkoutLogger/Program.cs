@@ -2,6 +2,20 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ==========================================
+// 1. Register CORS service
+// Allows Angular (running on localhost:4200 by default) to make requests to the API
+// ==========================================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200") // Angular dev server address
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddDbContext<WorkoutDb>(options =>
     options.UseSqlite("Data Source=workouts.db"));
 
@@ -9,6 +23,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// ==========================================
+// 2. Enable CORS Middleware
+// Must be placed HERE – before mapping endpoints (app.MapGroup)
+// ==========================================
+app.UseCors("AllowAngular");
 
 if (app.Environment.IsDevelopment())
 {
@@ -39,7 +59,6 @@ group.MapGet("/", async (DateOnly? from, DateOnly? to, WorkoutDb db) =>
 
     return workouts.Select(ToDto);
 });
-
 
 // Personal records: heaviest set per exercise
 group.MapGet("/records", async (WorkoutDb db) =>
@@ -148,14 +167,14 @@ group.MapDelete("/{id}", async (int id, WorkoutDb db) =>
 
 app.Run();
 
-// Maps a database entity to the object we return as JSON
+// Maps a database entity to the object we return as JSON (DTO)
 static WorkoutDto ToDto(Workout w) =>
     new(w.Id, w.Date, w.Notes,
         w.Sets.OrderBy(s => s.Id)
               .Select(s => new SetDto(s.Id, s.Exercise, s.Reps, s.WeightKg))
               .ToList());
 
-// Collects validation errors as field name -> list of messages
+// Collects validation errors as field name -> list of error messages
 static Dictionary<string, string[]> Validate(NewWorkout input)
 {
     var errors = new Dictionary<string, string[]>();
@@ -228,7 +247,7 @@ class ExerciseSet
     public double WeightKg { get; set; }
 }
 
-// Request and response shapes
+// Request and response shapes (DTOs)
 record NewSet(string? Exercise, int Reps, double WeightKg);
 record NewWorkout(DateOnly? Date, string? Notes, List<NewSet>? Sets);
 record SetDto(int Id, string Exercise, int Reps, double WeightKg);
@@ -239,8 +258,7 @@ class WorkoutDb : DbContext
 {
     public WorkoutDb(DbContextOptions<WorkoutDb> options) : base(options) { }
     public DbSet<Workout> Workouts => Set<Workout>();
-    public DbSet<ExerciseSet> ExerciseSets => Set<ExerciseSet>(); 
-
+    public DbSet<ExerciseSet> ExerciseSets => Set<ExerciseSet>();
 }
 
 public partial class Program { }
