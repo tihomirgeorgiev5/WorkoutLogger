@@ -14,5 +14,9 @@
     </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.1" />
   </ItemGroup>
+	
+	<ItemGroup>
+		<InternalsVisibleTo Include="WorkoutLogger.Tests" />
+	</ItemGroup>
 
 </Project>

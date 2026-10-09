@@ -239,5 +239,8 @@ class WorkoutDb : DbContext
 {
     public WorkoutDb(DbContextOptions<WorkoutDb> options) : base(options) { }
     public DbSet<Workout> Workouts => Set<Workout>();
-    public DbSet<ExerciseSet> ExerciseSets => Set<ExerciseSet>();
+    public DbSet<ExerciseSet> ExerciseSets => Set<ExerciseSet>(); 
+
 }
+
+public partial class Program { }

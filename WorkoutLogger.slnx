@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="WorkoutLogger.Tests/WorkoutLogger.Tests.csproj" Id="a538cdde-969e-402c-9878-02e409a99e26" />
   <Project Path="WorkoutLogger/WorkoutLogger.csproj" />
 </Solution>
