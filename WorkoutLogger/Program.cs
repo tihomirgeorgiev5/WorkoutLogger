@@ -4,17 +4,24 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ==========================================
 // 1. Register CORS service
-// Allows Angular (running on localhost:4200 by default) to make requests to the API
-// ==========================================
+// Allowed Angular origins come from configuration (defaults to local development)
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:4200" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
-    {
-        policy.WithOrigins("http://localhost:4200") // Angular dev server address
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
+              .AllowAnyMethod());
 });
+
+// Database path comes from configuration (defaults to a local file)
+var connectionString = builder.Configuration.GetConnectionString("Default")
+    ?? "Data Source=workouts.db";
+
+builder.Services.AddDbContext<WorkoutDb>(options =>
+    options.UseSqlite(connectionString));
 
 builder.Services.AddDbContext<WorkoutDb>(options =>
     options.UseSqlite("Data Source=workouts.db"));
