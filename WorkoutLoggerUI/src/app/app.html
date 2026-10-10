@@ -1,0 +1,51 @@
+<div style="padding: 20px; max-width: 800px; margin: 0 auto; font-family: sans-serif;">
+  <h1>Workout Logger</h1>
+
+  <h3>Weekly volume</h3>
+  @for (w of weekly(); track w.weekStart) {
+    <p>Week of {{ w.weekStart }}: {{ w.totalVolumeKg }} kg ({{ w.totalSets }} sets)</p>
+  } @empty {
+    <p>No data yet.</p>
+  }
+
+  <h3>Personal records</h3>
+  <ul>
+    @for (r of records(); track r.exercise) {
+      <li>{{ r.exercise }}: {{ r.maxWeightKg }} kg × {{ r.repsAtMax }} reps ({{ r.date }})</li>
+    }
+  </ul>
+
+  <h3>New workout</h3>
+  <div>
+    <label>Date <input type="date" [(ngModel)]="newWorkout.date" /></label>
+    <label> Notes <input [(ngModel)]="newWorkout.notes" /></label>
+  </div>
+
+  @for (s of newWorkout.sets; track $index) {
+    <div style="margin: 6px 0;">
+      <input [(ngModel)]="s.exercise" placeholder="Exercise" />
+      <input type="number" [(ngModel)]="s.reps" style="width: 60px;" /> reps
+      <input type="number" [(ngModel)]="s.weightKg" style="width: 70px;" /> kg
+      <button (click)="removeSet($index)">✕</button>
+    </div>
+  }
+  <button (click)="addSet()">+ Add set</button>
+  <button (click)="saveWorkout()">Save workout</button>
+
+  @if (error()) {
+    <p style="color: red;">{{ error() }}</p>
+  }
+
+  <h3>History</h3>
+  @for (w of workouts(); track w.id) {
+    <div style="border-bottom: 1px solid #ddd; padding: 8px 0;">
+      <strong>{{ w.date }}</strong> {{ w.notes }}
+      <button (click)="deleteWorkout(w.id!)" style="color: red; float: right;">Delete</button>
+      <ul>
+        @for (s of w.sets; track s.id) {
+          <li>{{ s.exercise }}: {{ s.reps }} reps × {{ s.weightKg }} kg</li>
+        }
+      </ul>
+    </div>
+  }
+</div>
