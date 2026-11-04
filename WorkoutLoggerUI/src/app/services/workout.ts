@@ -2,10 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Workout, ExerciseRecord, WeeklyVolume } from '../workout.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class WorkoutService {
-  private apiUrl = 'http://localhost:5194/workouts';
+
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
