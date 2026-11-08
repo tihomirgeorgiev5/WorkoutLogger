@@ -23,9 +23,6 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 builder.Services.AddDbContext<WorkoutDb>(options =>
     options.UseSqlite(connectionString));
 
-builder.Services.AddDbContext<WorkoutDb>(options =>
-    options.UseSqlite("Data Source=workouts.db"));
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -46,6 +43,10 @@ if (app.Environment.IsDevelopment())
 // Apply pending migrations (creates the database on the first run)
 using (var scope = app.Services.CreateScope())
 {
+    var dbDir = Path.GetDirectoryName(
+    new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(connectionString).DataSource);
+    if (!string.IsNullOrEmpty(dbDir)) Directory.CreateDirectory(dbDir);
+
     scope.ServiceProvider.GetRequiredService<WorkoutDb>().Database.Migrate();
 }
 
