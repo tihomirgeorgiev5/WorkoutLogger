@@ -1,3 +1,3 @@
 export const environment = {
-  apiUrl: 'https://CHANGE-ME.azurewebsites.net/workouts'
+  apiUrl: 'https://workoutlogger-api-tihomir-hbf7esh6f6bmhjde.westeurope-01.azurewebsites.net/workouts'
 };
