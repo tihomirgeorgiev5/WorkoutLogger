@@ -1,1 +1,50 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --radius: 14px;
+  --radius-sm: 8px;
+
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-2: #eef1f8;
+  --text: #121826;
+  --muted: #667085;
+  --border: #e1e6f0;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-soft: #e8e7fd;
+  --on-primary: #ffffff;
+  --danger: #dc2626;
+  --danger-soft: #fde8e8;
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 4px 16px rgb(16 24 40 / 6%);
+}
+
+[data-theme='dark'] {
+  --bg: #0b0f1a;
+  --surface: #131929;
+  --surface-2: #1b2236;
+  --text: #e8ecf5;
+  --muted: #94a0b8;
+  --border: #252e45;
+  --primary: #818cf8;
+  --primary-hover: #a5b4fc;
+  --primary-soft: #232a52;
+  --on-primary: #0b0f1a;
+  --danger: #f87171;
+  --danger-soft: #3a1f26;
+  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 16px rgb(0 0 0 / 25%);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
+}
+
+h1, h2, h3, p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }

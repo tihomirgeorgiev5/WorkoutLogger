@@ -1,51 +1,148 @@
-<div style="padding: 20px; max-width: 800px; margin: 0 auto; font-family: sans-serif;">
-  <h1>Workout Logger</h1>
-
-  <h3>Weekly volume</h3>
-  @for (w of weekly(); track w.weekStart) {
-    <p>Week of {{ w.weekStart }}: {{ w.totalVolumeKg }} kg ({{ w.totalSets }} sets)</p>
-  } @empty {
-    <p>No data yet.</p>
-  }
-
-  <h3>Personal records</h3>
-  <ul>
-    @for (r of records(); track r.exercise) {
-      <li>{{ r.exercise }}: {{ r.maxWeightKg }} kg × {{ r.repsAtMax }} reps ({{ r.date }})</li>
-    }
-  </ul>
-
-  <h3>New workout</h3>
-  <div>
-    <label>Date <input type="date" [(ngModel)]="newWorkout.date" /></label>
-    <label> Notes <input [(ngModel)]="newWorkout.notes" /></label>
-  </div>
-
-  @for (s of newWorkout.sets; track $index) {
-    <div style="margin: 6px 0;">
-      <input [(ngModel)]="s.exercise" placeholder="Exercise" />
-      <input type="number" [(ngModel)]="s.reps" style="width: 60px;" /> reps
-      <input type="number" [(ngModel)]="s.weightKg" style="width: 70px;" /> kg
-      <button (click)="removeSet($index)">✕</button>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🏋️</span>
+      <h1>Workout Logger</h1>
     </div>
-  }
-  <button (click)="addSet()">+ Add set</button>
-  <button (click)="saveWorkout()">Save workout</button>
+    <button
+      class="icon-btn"
+      type="button"
+      (click)="toggleTheme()"
+      [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
+      {{ theme() === 'dark' ? '☀️' : '🌙' }}
+    </button>
+  </header>
 
-  @if (error()) {
-    <p style="color: red;">{{ error() }}</p>
-  }
+  <main>
+    <!-- Overview -->
+    @let latest = weekly()[0];
+    <section class="stats">
+      <div class="stat">
+        <span class="stat-label">Latest week volume</span>
+        <span class="stat-value">{{ latest ? latest.totalVolumeKg : 0 }}<small> kg</small></span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Sets that week</span>
+        <span class="stat-value">{{ latest ? latest.totalSets : 0 }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Workouts logged</span>
+        <span class="stat-value">{{ workouts().length }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Exercises with a PR</span>
+        <span class="stat-value">{{ records().length }}</span>
+      </div>
+    </section>
 
-  <h3>History</h3>
-  @for (w of workouts(); track w.id) {
-    <div style="border-bottom: 1px solid #ddd; padding: 8px 0;">
-      <strong>{{ w.date }}</strong> {{ w.notes }}
-      <button (click)="deleteWorkout(w.id!)" style="color: red; float: right;">Delete</button>
-      <ul>
-        @for (s of w.sets; track s.id) {
-          <li>{{ s.exercise }}: {{ s.reps }} reps × {{ s.weightKg }} kg</li>
+    <div class="grid">
+      <section class="card">
+        <h2>Weekly volume</h2>
+        @for (w of weekly(); track w.weekStart) {
+          <div class="bar-row">
+            <div class="bar-head">
+              <span>Week of {{ w.weekStart }}</span>
+              <span class="muted">
+                {{ w.totalVolumeKg }} kg · {{ w.totalSets }} {{ w.totalSets === 1 ? 'set' : 'sets' }}
+              </span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" [style.width.%]="(w.totalVolumeKg / maxVolume()) * 100"></div>
+            </div>
+          </div>
+        } @empty {
+          <p class="empty">No data yet. Log your first workout below.</p>
         }
-      </ul>
+      </section>
+
+      <section class="card">
+        <h2>Personal records</h2>
+        <ul class="pr-list">
+          @for (r of records(); track r.exercise) {
+            <li>
+              <div>
+                <div class="pr-name">{{ r.exercise }}</div>
+                <div class="muted small">{{ r.date }}</div>
+              </div>
+              <div class="pr-value">
+                {{ r.maxWeightKg }} kg <span class="muted">× {{ r.repsAtMax }}</span>
+              </div>
+            </li>
+          } @empty {
+            <li class="empty">No records yet.</li>
+          }
+        </ul>
+      </section>
     </div>
-  }
+
+    <!-- New workout -->
+    <section class="card">
+      <h2>New workout</h2>
+      <div class="fields">
+        <label class="field">
+          <span>Date</span>
+          <input type="date" [(ngModel)]="newWorkout.date" />
+        </label>
+        <label class="field grow">
+          <span>Notes</span>
+          <input [(ngModel)]="newWorkout.notes" placeholder="e.g. Chest and legs day" />
+        </label>
+      </div>
+
+      <datalist id="exercises">
+        @for (r of records(); track r.exercise) {
+          <option [value]="r.exercise"></option>
+        }
+      </datalist>
+
+      <div class="sets">
+        <div class="set-header">
+          <span>Exercise</span><span>Reps</span><span>Weight (kg)</span><span></span>
+        </div>
+        @for (s of newWorkout.sets; track $index) {
+          <div class="set-row">
+            <input [(ngModel)]="s.exercise" list="exercises" placeholder="Exercise" aria-label="Exercise" />
+            <input type="number" min="1" inputmode="numeric" [(ngModel)]="s.reps" aria-label="Reps" />
+            <input type="number" min="0" step="0.5" inputmode="decimal" [(ngModel)]="s.weightKg" aria-label="Weight in kg" />
+            <button class="icon-btn danger" type="button" (click)="removeSet($index)" aria-label="Remove set">✕</button>
+          </div>
+        }
+      </div>
+
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+
+      <div class="actions">
+        <button class="btn secondary" type="button" (click)="addSet()">+ Add set</button>
+        <button class="btn primary" type="button" (click)="saveWorkout()">Save workout</button>
+      </div>
+    </section>
+
+    <!-- History -->
+    <section class="card">
+      <h2>History</h2>
+      @for (w of workouts(); track w.id) {
+        <article class="history-item">
+          <div class="history-head">
+            <div>
+              <strong>{{ w.date }}</strong>
+              @if (w.notes) { <span class="muted"> · {{ w.notes }}</span> }
+            </div>
+            <button class="btn ghost-danger" type="button" (click)="deleteWorkout(w.id!)">Delete</button>
+          </div>
+          <ul class="chips">
+            @for (s of w.sets; track s.id) {
+              <li class="chip">
+                <strong>{{ s.exercise }}</strong>
+                <span>{{ s.reps }} × {{ s.weightKg }} kg</span>
+              </li>
+            }
+          </ul>
+        </article>
+      } @empty {
+        <p class="empty">No workouts yet.</p>
+      }
+    </section>
+  </main>
 </div>
