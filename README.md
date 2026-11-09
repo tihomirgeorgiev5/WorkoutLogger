@@ -22,7 +22,7 @@ personal records and your weekly training volume.
 
 ## Tech stack
 
-- **Backend:** ASP.NET Core minimal API (.NET 9), Entity Framework Core, SQLite, migrations
+- **Backend:** ASP.NET Core minimal API (.NET 10), Entity Framework Core, SQLite, migrations
 - **Frontend:** Angular 20
 - **Tests:** xUnit with an in-memory SQLite database
 - **Hosting:** Azure Static Web Apps (frontend), Azure App Service (API)
@@ -133,5 +133,4 @@ The frontend reads the API address from `apiUrl` in the Angular
 
 - Charts and progress per exercise
 - Edit a workout from the UI
-- Upgrade to .NET 10
 - Move the database to Azure SQL
