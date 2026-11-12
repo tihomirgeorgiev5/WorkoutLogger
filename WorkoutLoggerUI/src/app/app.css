@@ -167,6 +167,38 @@ input:focus {
 }
 .chip span { color: var(--muted); font-variant-numeric: tabular-nums; }
 
+/* Confirm dialog */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 55%);
+  animation: fade-in 0.15s ease;
+}
+.dialog {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  animation: pop-in 0.15s ease;
+}
+.dialog h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+.btn.danger { background: var(--danger); color: #fff; }
+.btn.danger:hover { filter: brightness(0.92); }
+
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.96); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop, .dialog { animation: none; }
+}
+
 /* Mobile */
 @media (max-width: 720px) {
   .stats { grid-template-columns: repeat(2, 1fr); }

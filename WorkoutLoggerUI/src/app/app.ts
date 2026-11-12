@@ -10,8 +10,10 @@ type Theme = 'light' | 'dark';
   selector: 'app-root',
   imports: [FormsModule],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
+  host: { '(document:keydown.escape)': 'cancelDelete()' }
 })
+
 export class App implements OnInit {
   private workoutService = inject(WorkoutService);
   private wakeTimer?: ReturnType<typeof setTimeout>;
@@ -21,6 +23,7 @@ export class App implements OnInit {
   weekly = signal<WeeklyVolume[]>([]);
   error = signal('');
   theme = signal<Theme>(this.initialTheme());
+  pendingDelete = signal<Workout | null>(null);
 
   loading = signal(false);
   waking = signal(false);
@@ -121,7 +124,18 @@ export class App implements OnInit {
     });
   }
 
-  deleteWorkout(id: number): void {
+    askDelete(workout: Workout): void {
+    this.pendingDelete.set(workout);
+  }
+
+  cancelDelete(): void {
+    this.pendingDelete.set(null);
+  }
+
+  confirmDelete(): void {
+    const id = this.pendingDelete()?.id;
+    this.pendingDelete.set(null);
+    if (id == null) return;
     this.workoutService.deleteWorkout(id).subscribe(() => this.loadData());
   }
 }

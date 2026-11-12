@@ -161,7 +161,7 @@
                 <strong>{{ w.date }}</strong>
                 @if (w.notes) { <span class="muted"> · {{ w.notes }}</span> }
               </div>
-              <button class="btn ghost-danger" type="button" (click)="deleteWorkout(w.id!)">Delete</button>
+              <button class="btn ghost-danger" type="button" (click)="askDelete(w)">Delete</button>
             </div>
             <ul class="chips">
               @for (s of w.sets; track s.id) {
@@ -178,4 +178,25 @@
       </section>
     }
   </main>
+    @if (pendingDelete(); as w) {
+    <div class="backdrop" (click)="cancelDelete()">
+      <div
+        class="dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="dialog-title"
+        (click)="$event.stopPropagation()">
+        <h2 id="dialog-title">Delete this workout?</h2>
+        <p class="muted">
+          {{ w.date }}@if (w.notes) { · {{ w.notes }} }
+          · {{ w.sets.length }} {{ w.sets.length === 1 ? 'set' : 'sets' }}.
+          This cannot be undone.
+        </p>
+        <div class="actions">
+          <button class="btn secondary" type="button" (click)="cancelDelete()">Cancel</button>
+          <button class="btn danger" type="button" (click)="confirmDelete()">Delete</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
