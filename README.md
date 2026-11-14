@@ -14,18 +14,18 @@ personal records, your weekly training volume and your progress per exercise.
 ## Screenshots
 
 ### Workout diary
-![Workout diary](docs/screenshots/workouts1.png)
-![Workout diary](docs/screenshots/workouts2.png)
+![Workout diary](WorkoutLogger/docs/screenshots/workouts1.png)
+![Workout diary](WorkoutLogger/docs/screenshots/workouts2.png)
 
 ### Progress per exercise
-![Progress chart](docs/screenshots/progress-chart.png)
+![Progress chart](WorkoutLogger/docs/screenshots/progress-chart.png)
 
 ### New workout dialog
-![New workout dialog](docs/screenshots/new-workout.png)
+![New workout dialog](WorkoutLogger/docs/screenshots/new-workout.png)
 
 ### API: landing page and Swagger UI
-![API landing page](docs/screenshots/api-home.png)
-![Swagger UI](docs/screenshots/swagger.png)
+![API landing page](WorkoutLogger/docs/screenshots/api-home.png)
+![Swagger UI](WorkoutLogger/docs/screenshots/swagger.png)
 
 ## Features
 
