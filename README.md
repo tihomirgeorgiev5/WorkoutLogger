@@ -1,22 +1,43 @@
 # Workout Logger
 
 A full-stack workout diary. Log workouts as sessions made of sets, see your
-personal records and your weekly training volume.
+personal records, your weekly training volume and your progress per exercise.
 
 **Live demo:** https://blue-field-047855810.4.azurestaticapps.net
-**API:** https://workoutlogger-api-tihomir-hbf7esh6f6bmhjde.westeurope-01.azurewebsites.net/workouts
+**API:** https://workoutlogger-api-tihomir-hbf7esh6f6bmhjde.westeurope-01.azurewebsites.net
+**Swagger UI:** https://workoutlogger-api-tihomir-hbf7esh6f6bmhjde.westeurope-01.azurewebsites.net/swagger
 
 > Hosted on Azure free tiers: the first request after a period of inactivity
-> can be slower.
+> can be slower. The online instance holds **demo data only**: anyone can
+> create, edit or delete workouts, and the database is limited to 200 workouts.
+
+## Screenshots
+
+### Workout diary
+![Workout diary](docs/screenshots/workouts1.png)
+![Workout diary](docs/screenshots/workouts2.png)
+
+### Progress per exercise
+![Progress chart](docs/screenshots/progress-chart.png)
+
+### New workout dialog
+![New workout dialog](docs/screenshots/new-workout.png)
+
+### API: landing page and Swagger UI
+![API landing page](docs/screenshots/api-home.png)
+![Swagger UI](docs/screenshots/swagger.png)
 
 ## Features
 
 - Create, view, update and delete workouts (a workout has many sets)
+- Progress chart per exercise
 - Input validation with clear error messages
 - Personal record per exercise (heaviest set)
 - Weekly volume (reps x weight, weeks start on Monday)
 - Filter the workout list by date range
-- Swagger UI for exploring the API (development only)
+- Swagger UI for exploring and trying the API, also online
+- `/health` endpoint for monitoring and waking up the free tier
+- Demo limit of 200 workouts to protect the public database
 - Automated API tests (xUnit)
 - Deployed to Azure with automatic frontend deployment
 
@@ -35,6 +56,7 @@ personal records and your weekly training volume.
 | `WorkoutLogger` | ASP.NET Core API |
 | `WorkoutLogger.Tests` | xUnit API tests |
 | `WorkoutLoggerUI` | Angular frontend |
+| `docs/screenshots` | Images used in this README |
 
 ## Run locally
 
@@ -69,6 +91,8 @@ dotnet test
 
 | Method | Endpoint | Description |
 |---|---|---|
+| GET | `/` | Landing page with links to the app, Swagger and GitHub |
+| GET | `/health` | Health check, returns `ok` |
 | GET | `/workouts` | List workouts (optional `?from=` and `?to=`, format `yyyy-MM-dd`) |
 | GET | `/workouts/{id}` | Get one workout |
 | POST | `/workouts` | Create a workout |
@@ -102,6 +126,11 @@ Invalid requests return `400 Bad Request` with the problems listed per field.
 | `reps` | 1 to 1000 |
 | `weightKg` | 0 to 1000 (0 is allowed for bodyweight exercises) |
 
+### Demo limit
+
+The database holds at most 200 workouts. When the limit is reached, `POST
+/workouts` returns `409 Conflict` until a workout is deleted.
+
 ## Deployment
 
 | Part | Azure service | How it is deployed |
@@ -131,6 +160,6 @@ The frontend reads the API address from `apiUrl` in the Angular
 
 ## Roadmap
 
-- Charts and progress per exercise
 - Edit a workout from the UI
+- Wake up the API from the frontend using `/health`
 - Move the database to Azure SQL
