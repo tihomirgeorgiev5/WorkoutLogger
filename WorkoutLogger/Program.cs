@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,21 +24,32 @@ builder.Services.AddDbContext<WorkoutDb>(options =>
     options.UseSqlite(connectionString));
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
+    {
+        Title = "Workout Logger API",
+        Version = "v1",
+        Description = "⚠️ Demo data only. Anyone can create, edit or delete workouts, " +
+                      "and the database is limited to 200 records. Feel free to experiment!"
+    });
+});
 
 var app = builder.Build();
 
+const string FrontendUrl = "https://blue-field-047855810.4.azurestaticapps.net/";   // TODO: live site
+const string GitHubUrl = "https://github.com/tihomirgeorgiev5/WorkoutLogger"; // TODO: repository
+const int MaxWorkouts = 200; // demo limit on the number of records
+
+
 // ==========================================
 // 2. Enable CORS Middleware
-// Must be placed HERE � before mapping endpoints (app.MapGroup)
+// Must be placed HERE – before mapping endpoints (app.MapGroup)
 // ==========================================
 app.UseCors("AllowAngular");
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // Apply pending migrations (creates the database on the first run)
 using (var scope = app.Services.CreateScope())
@@ -49,6 +60,46 @@ using (var scope = app.Services.CreateScope())
 
     scope.ServiceProvider.GetRequiredService<WorkoutDb>().Database.Migrate();
 }
+
+// Landing page for anyone who opens the API address
+app.MapGet("/", () => Results.Content($$"""
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Workout Logger API</title>
+  <style>
+    body { margin:0; min-height:100vh; display:grid; place-items:center;
+           font-family: system-ui, sans-serif; background:#0f172a; color:#e2e8f0; }
+    main { max-width:520px; padding:2rem; text-align:center; }
+    h1 { margin:0 0 .5rem; font-size:2rem; }
+    p { color:#94a3b8; line-height:1.5; }
+    .links { display:flex; gap:.75rem; justify-content:center; flex-wrap:wrap; margin:1.5rem 0; }
+    a { padding:.6rem 1.1rem; border-radius:8px; text-decoration:none; font-weight:600;
+        background:#38bdf8; color:#0f172a; }
+    a.secondary { background:transparent; color:#38bdf8; border:1px solid #38bdf8; }
+    small { color:#64748b; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>🏋️ Workout Logger API</h1>
+    <p>REST API for logging workouts, personal records and weekly volume.
+       Built with ASP.NET Core minimal APIs, EF Core and SQLite.</p>
+    <div class="links">
+      <a href="{{FrontendUrl}}">Live app</a>
+      <a class="secondary" href="/swagger">Swagger</a>
+      <a class="secondary" href="{{GitHubUrl}}">GitHub</a>
+    </div>
+    <small>Demo data only: records may be removed at any time.</small>
+  </main>
+</body>
+</html>
+""", "text/html; charset=utf-8")).ExcludeFromDescription();
+
+// Health check (also used to wake up the Free tier)
+app.MapGet("/health", () => Results.Text("ok"));
 
 var group = app.MapGroup("/workouts");
 
