@@ -3,9 +3,11 @@
 A full-stack workout diary. Log workouts as sessions made of sets, see your
 personal records, your weekly training volume and your progress per exercise.
 
-**Live demo:** https://blue-field-047855810.4.azurestaticapps.net
-**API:** https://workoutlogger-api-tihomir-hbf7esh6f6bmhjde.westeurope-01.azurewebsites.net
-**Swagger UI:** https://workoutlogger-api-tihomir-hbf7esh6f6bmhjde.westeurope-01.azurewebsites.net/swagger
+| | |
+|---|---|
+| 🌐 **Live demo** | [blue-field-047855810.4.azurestaticapps.net](https://blue-field-047855810.4.azurestaticapps.net) |
+| ⚙️ **API** | [workoutlogger-api-tihomir-...azurewebsites.net](https://workoutlogger-api-tihomir-hbf7esh6f6bmhjde.westeurope-01.azurewebsites.net) |
+| 📖 **Swagger UI** | [Open Swagger](https://workoutlogger-api-tihomir-hbf7esh6f6bmhjde.westeurope-01.azurewebsites.net/swagger) |
 
 > Hosted on Azure free tiers: the first request after a period of inactivity
 > can be slower. The online instance holds **demo data only**: anyone can
